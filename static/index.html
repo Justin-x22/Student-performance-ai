@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance AI</title>
+    <style>
+    .dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+    align-items: stretch;
+}
+
+.stat-card {
+    background: #eef2ff;
+    padding: 18px 8px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #c7d2fe;
+    box-shadow: 0 4px 10px #0000000d;
+}
+
+.stat-card h3 {
+    font-size: 13px;
+    color: #4338ca;
+    margin: 5px 0 10px;
+}
+
+.stat-card p {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1e293b;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 400px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+}
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #ede9fe);
+            margin: 0;
+            padding: 30px 15px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 30px auto;
+            padding: 28px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 8px 25px #00000015;
+        }
+
+        h1 {
+            color: #4338ca;
+            text-align: center;
+        }
+
+        p {
+            text-align: center;
+            color: #64748b;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 7px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3730a3;
+        }
+
+        #result {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #15803d;
+            overflow-wrap: anywhere;
+        }
+        /* Fix prediction history table alignment */
+#history {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+#history table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#history th,
+#history td {
+    padding: 8px 4px;
+    border: 1px solid #ccc;
+    text-align: center;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-size: 12px;
+}
+
+@media (max-width: 500px) {
+    #history th,
+    #history td {
+        font-size: 10px;
+        padding: 5px 2px;
+    }
+}
+#history {
+    display: block;
+    margin-top: 25px !important;
+    padding-top: 15px;
+    clear: both;
+}
+
+#history table {
+    margin-top: 15px !important;
+}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎓 Student Performance AI</h1>
+        <p>Predict your expected final score</p>
+
+        <form id="predictionForm">
+            <label for="study_hours">Study Hours per Day</label>
+            <input id="study_hours" type="number"
+                   min="0" max="24" step="any" required>
+
+            <label for="sleep_hours">Sleep Hours per Day</label>
+            <input id="sleep_hours" type="number"
+                   min="0" max="24" step="any" required>
+
+            <label for="attendance">Attendance (%)</label>
+            <input id="attendance" type="number"
+                   min="0" max="100" step="any" required>
+
+            <label for="previous_score">Previous Score</label>
+            <input id="previous_score" type="number"
+                   min="0" max="100" step="any" required>
+
+            <button type="submit" id="predictButton">
+                Predict Final Score
+            </button>
+        </form>
+
+        <div id="result" aria-live="polite"></div>
+        <h2>📊 Prediction History</h2>
+        <div class="dashboard-stats">
+            <div class="stat-card">
+    <h3>MAE</h3>
+    <p id="maeValue">0.71</p>
+</div>
+
+<div class="stat-card">
+    <h3>RMSE</h3>
+    <p id="rmseValue">0.81</p>
+</div>
+
+<div class="stat-card">
+    <h3>R² Score</h3>
+    <p id="r2Value">0.9911</p>
+</div>
+    <div class="stat-card">
+        <h3>Total Predictions</h3>
+        <p id="totalPredictions">0</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Average Score</h3>
+        <p id="averageScore">0.00</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Highest Score</h3>
+        <p id="highestScore">0.00</p>
+    </div>
+</div>
+
+<button type="button" onclick="loadHistory()">
+    View Prediction History
+</button>
+<button type="button" onclick="clearHistory()">
+    Clear Prediction History
+</button>
+
+<div id="history"></div>
+
+<div id="scoreSection" style="display:none; margin-top:20px;">
+    <h3>Predicted Score Progress</h3>
+
+    <div style="background:#e5e7eb; border-radius:10px; overflow:hidden;">
+        <div id="scoreBar"
+             style="width:0%; background:#4f46e5; color:white;
+                    padding:8px 0; text-align:center;
+                    transition:width 0.5s;">
+            0%
+        </div>
+    </div>
+
+    <h3>Score Comparison</h3>
+    <canvas id="scoreChart"></canvas>
+    <div id="insights"
+     style="margin-top:20px; padding:15px;
+            background:#eef2ff; border-radius:12px;
+            color:#3730a3; text-align:center;">
+</div>
+</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+        const form = document.getElementById("predictionForm");
+        const result = document.getElementById("result");
+        const button = document.getElementById("predictButton");
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const student = {
+                study_hours: Number(document.getElementById("study_hours").value),
+                sleep_hours: Number(document.getElementById("sleep_hours").value),
+                attendance: Number(document.getElementById("attendance").value),
+                previous_score: Number(document.getElementById("previous_score").value)
+            };
+
+            button.disabled = true;
+            result.textContent = "Predicting...";
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(student)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(JSON.stringify(data.detail));
+                }
+
+              const score = Number(data.predicted_final_score);
+const previousScore = student.previous_score;
+
+result.textContent = "Predicted Score: " + score.toFixed(2);
+const insights = document.getElementById("insights");
+
+if (score >= 90) {
+    insights.textContent = "🌟 Excellent predicted performance! Keep it up.";
+} else if (score >= 75) {
+    insights.textContent = "👍 Good predicted performance. Keep improving!";
+} else if (score >= 50) {
+    insights.textContent = "📚 Moderate predicted performance. Consistent practice may help.";
+} else {
+    insights.textContent = "💪 More practice and academic support may help.";
+}
+
+document.getElementById("scoreSection").style.display = "block";
+
+const scoreBar = document.getElementById("scoreBar");
+const safeScore = Math.max(0, Math.min(100, score));
+
+scoreBar.style.width = safeScore + "%";
+scoreBar.textContent = score.toFixed(2) + " / 100";
+
+if (window.scoreChartInstance) {
+    window.scoreChartInstance.destroy();
+}
+
+const ctx = document.getElementById("scoreChart");
+
+window.scoreChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+        labels: ["Previous Score", "Predicted Final Score"],
+        datasets: [{
+            label: "Score",
+            data: [previousScore, score],
+            backgroundColor: ["#60a5fa", "#4f46e5"]
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+            } catch (error) {
+                result.textContent = "Error: " + error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+    async function loadHistory() {
+    const historyDiv = document.getElementById("history");
+    historyDiv.innerHTML = "Loading history...";
+
+    try {
+        const response = await fetch("/history");
+        if (!response.ok) {
+            throw new Error("Could not load history");
+        }
+
+        const records = await response.json();
+        const scores = records.map(record =>
+    Number(record.predicted_final_score)
+);
+
+document.getElementById("totalPredictions").textContent =
+    records.length;
+
+document.getElementById("averageScore").textContent =
+    scores.length
+        ? (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(2)
+        : "0.00";
+
+document.getElementById("highestScore").textContent =
+    scores.length ? Math.max(...scores).toFixed(2) : "0.00";
+
+        if (records.length === 0) {
+            historyDiv.textContent = "No prediction history yet.";
+            return;
+        }
+
+        let table = `
+            <table border="1" cellpadding="8" cellspacing="0">
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Study Hours</th>
+                    <th>Sleep Hours</th>
+                    <th>Attendance</th>
+                    <th>Previous Score</th>
+                    <th>Predicted Score</th>
+                </tr>`;
+
+        records.forEach(record => {
+            table += `
+                <tr>
+                    <td>${record.timestamp}</td>
+                    <td>${record.study_hours}</td>
+                    <td>${record.sleep_hours}</td>
+                    <td>${record.attendance}%</td>
+                    <td>${record.previous_score}</td>
+                    <td>${record.predicted_final_score}</td>
+                </tr>`;
+        });
+
+        table += "</table>";
+        historyDiv.innerHTML = table;
+    } catch (error) {
+        historyDiv.textContent = "Error loading history: " + error.message;
+    }
+}async function clearHistory() {
+    const confirmed = confirm(
+        "Are you sure you want to clear all prediction history?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch("/history", {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Could not clear history");
+        }
+
+        alert(data.message);
+        document.getElementById("history").innerHTML = "";
+        document.getElementById("totalPredictions").textContent = "0";
+document.getElementById("averageScore").textContent = "0.00";
+document.getElementById("highestScore").textContent = "0.00";
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+}  // Clear history on page load
+async function loadModelMetrics() {
+    try {
+        const response = await fetch("/metrics");
+
+        if (!response.ok) {
+            throw new Error("Failed to load model metrics");
+        }
+
+        const metrics = await response.json();
+
+        document.getElementById("maeValue").textContent =
+            Number(metrics.mae).toFixed(2);
+
+        document.getElementById("rmseValue").textContent =
+            Number(metrics.rmse).toFixed(2);
+
+        document.getElementById("r2Value").textContent =
+            Number(metrics.r2).toFixed(4);
+    } catch (error) {
+        console.error("Error loading model metrics:", error);
+    }
+}
+
+loadModelMetrics();
+</script>
+</body>
+</html>
