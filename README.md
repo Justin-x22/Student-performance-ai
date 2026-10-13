@@ -87,3 +87,6 @@ Future Improvements
 Author
 
 GitHub: "Justin-x22" (https://github.com/Justin-x22)
+## Dashboard Preview
+
+![Student Performance AI Dashboard](dashboard.png)
