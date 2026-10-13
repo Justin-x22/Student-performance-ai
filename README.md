@@ -44,3 +44,46 @@ Project Structure
 Disclaimer
 
 This is an educational machine learning project. Predictions are experimental and should not be treated as reliable assessments of real students.
+Installation and Setup
+
+1. Clone the repository
+
+git clone https://github.com/Justin-x22/Student-performance-ai.git
+cd Student-performance-ai
+
+2. Create a virtual environment
+
+python -m venv .venv
+
+3. Install dependencies
+
+Windows (PowerShell):
+
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+4. Run the application
+
+.\.venv\Scripts\python.exe -m uvicorn app:app --reload
+
+Open http://127.0.0.1:8000 in your browser.
+
+Model Evaluation
+
+The model is evaluated using:
+
+- MAE: Mean Absolute Error
+- RMSE: Root Mean Squared Error
+- R² Score: Coefficient of determination
+
+The current evaluation results are displayed on the application dashboard. Results depend on the dataset and train/test split.
+
+Future Improvements
+
+- Use a larger, real-world student dataset.
+- Compare Linear Regression with other machine learning algorithms.
+- Improve model validation and generalization.
+- Deploy the application online.
+
+Author
+
+GitHub: "Justin-x22" (https://github.com/Justin-x22)
